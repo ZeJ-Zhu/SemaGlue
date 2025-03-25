@@ -49,8 +49,6 @@ The matches are colored by their predicted confidence in a jet colormap (Green: 
 
 You can also estimate the pose using RANSAC + Essential Matrix decomposition and evaluate it if the ground truth relative poses and intrinsics are provided in the input `.txt` files. Each `.txt` file contains three key ground truth matrices: a 3x3 intrinsics matrix of image0: `K0`, a 3x3 intrinsics matrix of image1: `K1` , and a 4x4 matrix of the relative pose extrinsics `T_0to1`.
 
-`</details>`
-
 ### Recommended settings for YFCC
 
 
