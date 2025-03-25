@@ -75,16 +75,15 @@ You can provide your own list of pairs `--input_pairs` for images contained in `
 We provide the groundtruth for YFCC in our format in the file `assets/yfcc_test_pairs_with_gt.txt` for convenience. In order to reproduce similar tables to what was in the paper, you will need to download the dataset (we do not provide the raw test images). To download the YFCC dataset, you can use the [OANet](https://github.com/zjhthu/OANet) repo:
 
 ```sh
+ 
+git clone https://github.com/zjhthu/OANet
 
-gitclonehttps://github.com/zjhthu/OANet
+cd OANet
 
-cdOANet
+bash download_data.sh raw_data raw_data_yfcc.tar.gz 0 8
 
-bashdownload_data.shraw_dataraw_data_yfcc.tar.gz08
+tar-xvf raw_data_yfcc.tar.gz
 
-tar-xvfraw_data_yfcc.tar.gz
-
-mvraw_data/yfcc100m~/data
 
 ```
 
@@ -92,7 +91,7 @@ Once the YFCC dataset is downloaded in `~/data/yfcc100m`, you can run the follow
 
 ```sh
 
-./match_pairs.py--input_dir~/data/yfcc100m--input_pairsassets/yfcc_test_pairs_with_gt.txt--output_dirdump_yfcc_test_results--eval--resize1600--superglueoutdoor--max_keypoints2048--nms_radius3--resize_float
+./match_pairs.py --input_dir ~/data/yfcc100m --input_pairs assets/yfcc_test_pairs_with_gt.txt --output_dir dump_yfcc_test_results --eval --resize1600 --max_keypoints2048 --nms_radius3 --resize_float
 
 ```
 
