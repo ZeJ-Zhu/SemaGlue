@@ -14,9 +14,9 @@ This repository contains the evaluation for relative pose estimation on YFCC100M
 
 After creating and activating  a practicable environment, our repository and other dependencies can be easily downloaded and intsalled through git and pip.
 
-* git clone https://github.com/ZeJ-Zhu/SemaGlue.git
-* cd SemaGlue
-* pip install -r requirements.txt
+* `git clone https://github.com/ZeJ-Zhu/SemaGlue.git`
+* `cd SemaGlue`
+* `pip install -r requirements.txt`
 
 Then download the pre-trained models from [here](https://drive.google.com/drive/folders/1Mp7BfEWCBDCNXBuUMHGltb8NQgSJQAR0?usp=sharing).  All weight files should be saved in .models/weights/.
 
