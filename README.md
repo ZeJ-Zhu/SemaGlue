@@ -18,7 +18,7 @@ After creating and activating  a practicable environment, our repository and oth
 * cd SemaGlue
 * pip install -r requirements.txt
 
-Then download the pre-trained models from [here](https://drive.google.com/drive/folders/1Mp7BfEWCBDCNXBuUMHGltb8NQgSJQAR0).  All weight files should be saved in .models/weights/.
+Then download the pre-trained models from [here](https://drive.google.com/drive/folders/1Mp7BfEWCBDCNXBuUMHGltb8NQgSJQAR0?usp=sharing).  All weight files should be saved in .models/weights/.
 
 ## Contents
 
