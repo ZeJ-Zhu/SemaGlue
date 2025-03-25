@@ -46,13 +46,15 @@ Run the demo on the default given image pairs:
 
 The matches are colored by their predicted confidence in a jet colormap (Green: more confident, Red: less confident).
 
+</details>
+
 ### Evaluation mode
 
 You can also estimate the pose using RANSAC + Essential Matrix decomposition and evaluate it if the ground truth relative poses and intrinsics are provided in the input `.txt` files. Each `.txt` file contains three key ground truth matrices: a 3x3 intrinsics matrix of image0: `K0`, a 3x3 intrinsics matrix of image1: `K1` , and a 4x4 matrix of the relative pose extrinsics `T_0to1`.
 
-`</details>`
-
 ### Recommended settings for YFCC
+
+<details>
 
 <summary>[Click to expand]</summary>
 
@@ -107,6 +109,8 @@ AUC@5    AUC@10  AUC@20  Prec    MScore
 40.10    60.35   76.24   99.14   21.72  
 
 ```
+
+</details>
 
 ## BibTeX Citation
 
