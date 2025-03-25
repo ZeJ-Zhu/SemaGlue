@@ -62,7 +62,7 @@ For **outdoor** images, we recommend the following settings:
 
 ```sh
 
-./match_pairs.py--resize1600--superglueoutdoor--max_keypoints2048--nms_radius3--resize_float
+./match_pairs.py--resize 1600 --max_keypoints 2048 --nms_radius 3 --resize_float
 
 ```
 
