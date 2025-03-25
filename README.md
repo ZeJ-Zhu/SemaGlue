@@ -70,8 +70,6 @@ You can provide your own list of pairs `--input_pairs` for images contained in `
 
 ### Reproducing the outdoor evaluation on YFCC
 
-<summary>[Click to expand]</summary>
-
 We provide the groundtruth for YFCC in our format in the file `assets/yfcc_test_pairs_with_gt.txt` for convenience. In order to reproduce similar tables to what was in the paper, you will need to download the dataset (we do not provide the raw test images). To download the YFCC dataset, you can use the [OANet](https://github.com/zjhthu/OANet) repo:
 
 ```sh
