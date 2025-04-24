@@ -112,5 +112,6 @@ AUC@5    AUC@10  AUC@20  Prec    MScore
 If you use any ideas from the paper or code from this repo, please consider citing:
 
 ```txt
+Zhang, S., Zhu, Z., Li, Z., Lu, T., & Ma, J. (2025, April). Matching While Perceiving: Enhance Image Feature Matching with Applicable Semantic Amalgamation. In Proceedings of the AAAI Conference on Artificial Intelligence (Vol. 39, No. 10, pp. 10094-10102).
 
 ```
