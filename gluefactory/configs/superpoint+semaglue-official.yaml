@@ -13,7 +13,7 @@ model:
         norm_typ: 'SyncBN' # norm_cfg = dict(type='SyncBN', requires_grad=True)
         ffn_ratios : [8,8,4,4]
     matcher:
-      name: matchers.lightglue
+      name: matchers.semaglue
       features: superpoint
       depth_confidence: -1
       width_confidence: -1
