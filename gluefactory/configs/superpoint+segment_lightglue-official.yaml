@@ -1,0 +1,39 @@
+model:
+    name: two_view_pipeline
+    extractor:
+      name: gluefactory_nonfree.superpoint
+      max_num_keypoints: 2048
+      detection_threshold: 0.0
+      nms_radius: 3
+    segment:
+        name: segments.segment
+        num_classes: 150 #lightglue配置中有个default_conf segementi_dim需要设置
+        #stochastic_drop_path: 2e-1
+        #backbone 
+        embed_dims: [32,64,160,256]
+        norm_typ: 'SyncBN' # norm_cfg = dict(type='SyncBN', requires_grad=True)
+        ffn_ratios : [8,8,4,4]
+    matcher:
+      name: matchers.lightglue
+      features: superpoint
+      depth_confidence: -1
+      width_confidence: -1
+      filter_threshold: 0.1
+      n_layers: 9
+      segment_dim: 480 #segment维度
+benchmarks:
+    megadepth1500:
+      data:
+        preprocessing:
+          side: long
+          resize: 1600 #1024
+      eval:
+        estimator: opencv
+        ransac_th: 0.5
+    hpatches:
+      eval:
+        estimator: opencv
+        ransac_th: 0.5
+      model:
+        extractor:
+          max_num_keypoints: 1024 #1024  # overwrite config above

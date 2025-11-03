@@ -1,0 +1,85 @@
+data:
+    name: homographies
+    data_dir: revisitop1m
+    train_size: 150000  #150000
+    val_size: 2000  #2000
+    batch_size: 48
+    num_workers: 7  #14
+    homography:
+        difficulty: 0.7
+        max_angle: 45
+    photometric:
+        name: lg
+    load_segments:
+        do: false #True
+        path: exports/homography_seg/ #SEGMENT_PATH
+model:
+    name: two_view_pipeline
+    extractor:
+        name: extractors.aliked
+        max_num_keypoints: 512
+        detection_threshold: 0.0
+        trainable: False
+    detector:
+        name: null
+    descriptor:
+        name: null
+    ground_truth:
+        name: matchers.homography_matcher
+        th_positive: 3
+        th_negative: 3
+    segment:
+        name: segments.segment
+        trainable: False
+        num_classes: 150 #lightglue配置中有个default_conf segementi_dim需要设置
+        #stochastic_drop_path: 2e-1
+        #backbone 
+        embed_dims: [32,64,160,256]
+        norm_typ: 'SyncBN' # norm_cfg = dict(type='SyncBN', requires_grad=True)
+        
+        #Hamburger Parameters
+        ham_channels: 256 #ham_channels输入hamburger的通道
+        put_cheese: True
+
+        DUAL: False
+        SPATIAL: True
+        RAND_INIT: True
+
+        MD_S: 1
+        MD_D: 512
+        MD_R: 64
+
+        TRAIN_STEPS: 6
+        EVAL_STEPS: 6
+
+        INV_T: 1
+        BETA: 0.1
+        Eta: 0.9
+    matcher:
+        name: matchers.lightglue
+        filter_threshold: 0.1 #0.25 #0.5 # 0.1
+        segment_dim: 480 #segment维度
+        input_dim: 128
+        n_layers: 9
+        flash: false
+        checkpointed: true
+train:
+    seed: 0
+    epochs: 40
+    log_every_iter: 100
+    eval_every_iter: 500
+    lr: 1e-4
+    lr_schedule:
+        # light: 15
+        # light_factor: 0.9
+        start: 20 #20
+        type: factor
+        on_epoch: true
+        factor: 0.8
+        #exp_div_10: 10
+    # plot: [5, 'gluefactory.visualization.visualize_batch.make_match_figures']
+benchmarks:
+    hpatches:
+      eval:
+        estimator: opencv
+        ransac_th: 0.5

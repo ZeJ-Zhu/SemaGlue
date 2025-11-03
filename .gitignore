@@ -1,0 +1,10 @@
+.venv
+/build/
+*.egg-info
+*.pyc
+/.idea/
+/venv/
+/data/
+/outputs/
+__pycache__
+gluefactory/models/matchers/omniglue/weights/*.pth

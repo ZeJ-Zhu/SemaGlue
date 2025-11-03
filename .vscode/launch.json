@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: remote attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+            "host": "127.0.13.25",
+            "port": 8002,
+            "justMyCode": true
+           },
+        }
+     ]
+   }
