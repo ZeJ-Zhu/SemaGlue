@@ -1,32 +1,3 @@
-# Glue Factory
-Glue Factory is CVG's library for training and evaluating deep neural network that extract and match local visual feature. It enables you to:
-- Reproduce the training of state-of-the-art models for point and line matching, like [LightGlue](https://github.com/cvg/LightGlue) and [GlueStick](https://github.com/cvg/GlueStick) (ICCV 2023)
-- Train these models on multiple datasets using your own local features or lines
-- Evaluate feature extractors or matchers on standard benchmarks like HPatches or MegaDepth-1500
-
-<p align="center">
-  <a href="https://github.com/cvg/LightGlue"><img src="docs/lightglue_matches.svg" width="60%"/></a>
-  <a href="https://github.com/cvg/GlueStick"><img src="docs/gluestick_img.svg" width="60%"/></a>
-  <br /><em>Point and line matching with LightGlue and GlueStick.</em>
-</p>
-
-## Installation
-Glue Factory runs with Python 3 and [PyTorch](https://pytorch.org/). The following installs the library and its basic dependencies:
-```bash
-git clone https://github.com/cvg/glue-factory
-cd glue-factory
-python3 -m pip install -e .  # editable mode
-```
-Some advanced features might require installing the full set of dependencies:
-```bash
-python3 -m pip install -e .[extra]
-```
-
-All models and datasets in gluefactory have auto-downloaders, so you can get started right away!
-
-## License
-The code and trained models in Glue Factory are released with an Apache-2.0 license. This includes LightGlue and an [open version of SuperPoint](https://github.com/rpautrat/SuperPoint). Third-party models that are not compatible with this license, such as SuperPoint (original) and SuperGlue, are provided in `gluefactory_nonfree`, where each model might follow its own, restrictive license.
-
 ## Evaluation
 
 #### HPatches
@@ -95,12 +66,6 @@ You should expect the following results
  "H_error_ransac_mAA": 0.62806,
  "mH_error_ransac": null}
 ```
-
-Since we use points and lines to solve for the homography, we use a different robust estimator here: [Hest](https://github.com/rpautrat/homography_est/). Here are the results as Area Under the Curve (AUC) of the homography error at  1/3/5 pixels:
-
-| Methods                                                      | DLT         | [Hest](gluefactory/robust_estimators/homography/homography_est.py)       |
-| ------------------------------------------------------------ | ------------------ | ------------------ |
-| [SP + LSD + GlueStick](gluefactory/configs/superpoint+lsd+gluestick.yaml) | 33.6 / 66.4 / 77.1 | 39.2 / 69.7 / 79.6 |
 
 </details>
 
@@ -305,34 +270,3 @@ Using the following local feature extractors:
 | [ALIKED](https://github.com/Shiaoming/ALIKED) | `aliked+lightglue_{homography,megadepth}.yaml` |
 | [DISK](https://github.com/cvlab-epfl/disk) | `disk+lightglue_{homography,megadepth}.yaml` |
 | Key.Net + HardNet | ❌ TODO |
-
-## Coming soon
-- [ ] More baselines (LoFTR, ASpanFormer, MatchFormer, SGMNet, DKM, RoMa)
-- [ ] Training deep detectors and descriptors like SuperPoint
-- [ ] IMC evaluations
-- [ ] Better documentation
-
-## BibTeX Citation
-Please consider citing the following papers if you found this library useful:
-```bibtex
-@InProceedings{lindenberger_2023_lightglue,
-  title     = {{LightGlue: Local Feature Matching at Light Speed}},
-  author    = {Philipp Lindenberger and
-               Paul-Edouard Sarlin and
-               Marc Pollefeys},
-  booktitle = {International Conference on Computer Vision (ICCV)},
-  year      = {2023}
-}
-```
-```bibtex
-@InProceedings{pautrat_suarez_2023_gluestick,
-  title     = {{GlueStick: Robust Image Matching by Sticking Points and Lines Together}},
-  author    = {R{\'e}mi Pautrat* and
-               Iago Su{\'a}rez* and
-               Yifan Yu and
-               Marc Pollefeys and
-               Viktor Larsson},
-  booktitle = {International Conference on Computer Vision (ICCV)},
-  year      = {2023}
-}
-```
