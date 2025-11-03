@@ -8,23 +8,7 @@ Running the evaluation commands automatically downloads the dataset, by default 
 
 To evaluate the pre-trained SuperPoint+LightGlue model on HPatches, run:
 ```bash
-python -m gluefactory.eval.hpatches --conf superpoint+lightglue-official --overwrite
-```
-You should expect the following results
-```
-{'H_error_dlt@1px': 0.3515,
- 'H_error_dlt@3px': 0.6723,
- 'H_error_dlt@5px': 0.7756,
- 'H_error_ransac@1px': 0.3428,
- 'H_error_ransac@3px': 0.5763,
- 'H_error_ransac@5px': 0.6943,
- 'mnum_keypoints': 1024.0,
- 'mnum_matches': 560.756,
- 'mprec@1px': 0.337,
- 'mprec@3px': 0.89,
- 'mransac_inl': 130.081,
- 'mransac_inl%': 0.217,
- 'ransac_mAA': 0.5378}
+python -m gluefactory.eval.hpatches --conf superpoint+semaglue-official --overwrite
 ```
 
 The default robust estimator is `opencv`, but we strongly recommend to use `poselib` instead:
@@ -34,12 +18,6 @@ python -m gluefactory.eval.hpatches --conf superpoint+lightglue-official --overw
 ```
 Setting `eval.ransac_th=-1` auto-tunes the RANSAC inlier threshold by running the evaluation with a range of thresholds and reports results for the optimal value.
 Here are the results as Area Under the Curve (AUC) of the homography error at  1/3/5 pixels:
-
-| Methods                                                      | DLT         | [OpenCV](../gluefactory/robust_estimators/homography/opencv.py)       | [PoseLib](../gluefactory/robust_estimators/homography/poselib.py)      |
-| ------------------------------------------------------------ | ------------------ | ------------------ | ------------------ |
-| [SuperPoint + SuperGlue](gluefactory/configs/superpoint+superglue-official.yaml) | 32.1 / 65.0 / 75.7 | 32.9 / 55.7 / 68.0 | 37.0 / 68.2 / 78.7 |
-| [SuperPoint + LightGlue](gluefactory/configs/superpoint+lightglue-official.yaml) | 35.1 / 67.2 / 77.6 | 34.2 / 57.9 / 69.9 | 37.1 / 67.4 / 77.8 |
-
 
 </details>
 
@@ -153,12 +131,6 @@ AP_lines: 69.22
 
 </details>
 
-#### Image Matching Challenge 2021
-Coming soon!
-
-#### Image Matching Challenge 2023
-Coming soon!
-
 #### Visual inspection
 <details>
 To inspect the evaluation visually, you can run:
@@ -172,7 +144,7 @@ Click on a point to visualize matches on this pair.
 To compare multiple methods on a dataset:
 
 ```bash
-python -m gluefactory.eval.inspect hpatches superpoint+lightglue-official superpoint+superglue-official
+python -m gluefactory.eval.inspect hpatches superpoint+semaglue-official superpoint+superglue-official
 ```
 
 All current benchmarks are supported by the viewer.
@@ -255,6 +227,7 @@ Note that we used the training splits `train_scenes.txt` and `valid_scenes.txt` 
 Glue Factory supports training and evaluating the following deep matchers:
 | Model     | Training? | Evaluation? |
 | --------- | --------- | ----------- |
+| [SemaGlue](https://github.com/ZeJ-Zhu/SemaGlue) | ✅         | ✅           |
 | [LightGlue](https://github.com/cvg/LightGlue) | ✅         | ✅           |
 | [GlueStick](https://github.com/cvg/GlueStick) | ✅         | ✅           |
 | [SuperGlue](https://github.com/magicleap/SuperGluePretrainedNetwork) | ✅         | ✅           |
@@ -262,7 +235,7 @@ Glue Factory supports training and evaluating the following deep matchers:
 
 Using the following local feature extractors:
 
-| Model     | LightGlue config |
+| Model     | SemaGlue config |
 | --------- | --------- |
 | [SuperPoint (open)](https://github.com/rpautrat/SuperPoint) | `superpoint-open+lightglue_{homography,megadepth}.yaml` |
 | [SuperPoint (official)](https://github.com/magicleap/SuperPointPretrainedNetwork) | `superpoint+lightglue_{homography,megadepth}.yaml` |
