@@ -29,7 +29,7 @@ model:
     segment:
         name: segments.segment
         trainable: False
-        num_classes: 150 #lightglue配置中有个default_conf segementi_dim需要设置
+        num_classes: 150 
         #backbone 
         embed_dims: [32,64,160,256]
         norm_typ: 'SyncBN' # norm_cfg = dict(type='SyncBN', requires_grad=True)
@@ -37,7 +37,7 @@ model:
     matcher:
         name: matchers.lightglue
         filter_threshold: 0.1 #0.25 #0.5 # 0.1
-        segment_dim: 480 #segment维度
+        segment_dim: 480 
         #max_num_keypoints: 512
         n_layers: 9
         flash: false
