@@ -35,7 +35,7 @@ model:
         norm_typ: 'SyncBN' # norm_cfg = dict(type='SyncBN', requires_grad=True)
         ffn_ratios: [8,8,4,4]
     matcher:
-        name: matchers.lightglue
+        name: matchers.semaglue
         filter_threshold: 0.1 #0.25 #0.5 # 0.1
         segment_dim: 480 
         #max_num_keypoints: 512
