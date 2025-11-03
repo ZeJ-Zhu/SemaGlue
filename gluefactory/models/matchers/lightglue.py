@@ -80,7 +80,6 @@ class TokenConfidence(nn.Module):
     def forward(self, desc0: torch.Tensor, desc1: torch.Tensor):
         """get confidence tokens"""
         return (
-            #detach()返回一个新的 Tensor，这个 Tensor 和原来的 Tensor 共享相同的内存空间，但是不会被计算图所追踪，也就是说它不会参与反向传播
             self.token(desc0.detach()).squeeze(-1),
             self.token(desc1.detach()).squeeze(-1),
         )
@@ -140,12 +139,12 @@ class SelfBlock(nn.Module):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        assert self.embed_dim % num_heads == 0#检查embed_dim是否可以均匀地被“num_heads“整除
+        assert self.embed_dim % num_heads == 0
         self.head_dim = self.embed_dim // num_heads
-        self.Wqkv = nn.Linear(embed_dim, 3 * embed_dim, bias=bias)#线性层，将输入嵌入维度映射到三倍的嵌入维度
-        self.inner_attn = Attention(flash)#自定义的注意力机制模块
-        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)#映射回
-        self.ffn = nn.Sequential(#包含两个线性层的前馈神经网络，其中间经过LayerNorm和GELU激活函数
+        self.Wqkv = nn.Linear(embed_dim, 3 * embed_dim, bias=bias)
+        self.inner_attn = Attention(flash)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
+        self.ffn = nn.Sequential(
             nn.Linear(2 * embed_dim, 2 * embed_dim),
             nn.LayerNorm(2 * embed_dim, elementwise_affine=True),
             nn.GELU(),
@@ -174,7 +173,7 @@ class CrossBlock(nn.Module):
         super().__init__()
         self.heads = num_heads
         dim_head = embed_dim // num_heads
-        self.scale = dim_head**-0.5#self.scale是dim_head的倒数的平方根
+        self.scale = dim_head**-0.5
         inner_dim = dim_head * num_heads
         self.to_qk = nn.Linear(embed_dim, inner_dim, bias=bias)
         self.to_v = nn.Linear(embed_dim, inner_dim, bias=bias)
@@ -190,7 +189,7 @@ class CrossBlock(nn.Module):
         else:
             self.flash = None
 
-    def map_(self, func: Callable, x0: torch.Tensor, x1: torch.Tensor):#接受一个func函数，应用于x0和x1
+    def map_(self, func: Callable, x0: torch.Tensor, x1: torch.Tensor):
         return func(x0), func(x1)
 
     def forward(
@@ -198,7 +197,7 @@ class CrossBlock(nn.Module):
     ) -> List[torch.Tensor]:
         qk0, qk1 = self.map_(self.to_qk, x0, x1)
         v0, v1 = self.map_(self.to_v, x0, x1)
-        qk0, qk1, v0, v1 = map(#将qk和v张量进行形状变换，以适应多头注意力机制的计算。将最后一个维度划分为多个维度，然后进行维度交换
+        qk0, qk1, v0, v1 = map(
             lambda t: t.unflatten(-1, (self.heads, -1)).transpose(1, 2),
             (qk0, qk1, v0, v1),
         )
@@ -208,20 +207,16 @@ class CrossBlock(nn.Module):
                 qk1, qk0, v0, mask.transpose(-1, -2) if mask is not None else None
             )
         else:
-            qk0, qk1 = qk0 * self.scale**0.5, qk1 * self.scale**0.5#乘上self.scale的平方根
-            sim = torch.einsum("bhid, bhjd -> bhij", qk0, qk1)#计算注意力矩阵，通过使用torch.einsum进行批量矩阵乘法，得到形状为（batch_size,num_heads,seq_len,seq_len)的注意力矩阵
+            qk0, qk1 = qk0 * self.scale**0.5, qk1 * self.scale**0.5
+            sim = torch.einsum("bhid, bhjd -> bhij", qk0, qk1)
             if mask is not None:
-                sim = sim.masked_fill(~mask, -float("inf"))#将掩码应用到注意力矩阵，将不需要关注的位置的注意力分数设为负无穷。这可以确保在 softmax 操作时，这些位置的注意力分数趋近于零
+                sim = sim.masked_fill(~mask, -float("inf"))
             attn01 = F.softmax(sim, dim=-1)
             attn10 = F.softmax(sim.transpose(-2, -1).contiguous(), dim=-1)
-            #使用 torch.einsum 将注意力矩阵与值张量相乘，得到加权的输出 m0 和 m1
             m0 = torch.einsum("bhij, bhjd -> bhid", attn01, v1)
-            #如果存在掩码 (mask)，则对输出进行 nan-to-num 操作，将 NaN 替换为零
             m1 = torch.einsum("bhji, bhjd -> bhid", attn10.transpose(-2, -1), v0)
             if mask is not None:
                 m0, m1 = m0.nan_to_num(), m1.nan_to_num()
-        #m0 和 m1 被映射（map_）到新的形状：通过将每个张量进行转置，交换其第一和第二维，然后使用 flatten 函数在 start_dim=-2 的维度上进行展平。
-        #这通常用于将形状为 (batch_size, num_heads, seq_len, dim) 的张量变形为 (batch_size, num_heads * seq_len, dim)。
         m0, m1 = self.map_(lambda t: t.transpose(1, 2).flatten(start_dim=-2), m0, m1)
         m0, m1 = self.map_(self.to_out, m0, m1)
         x0 = x0 + self.ffn(torch.cat([x0, m0], -1))
@@ -358,7 +353,6 @@ class MatchAssignment(nn.Module):
         mdesc0, mdesc1 = self.final_proj(desc0), self.final_proj(desc1)
         _, _, d = mdesc0.shape
         mdesc0, mdesc1 = mdesc0 / d**0.25, mdesc1 / d**0.25
-        #计算相似矩阵
         sim = torch.einsum("bmd,bnd->bmn", mdesc0, mdesc1)
         z0 = self.matchability(desc0)
         z1 = self.matchability(desc1)
@@ -399,13 +393,13 @@ def filter_matches(scores: torch.Tensor, th: float):
     # 返回有效匹配的索引和分数
     return m0, m1, mscores0, mscores1
 
-class LightGlue(nn.Module):
+class SemaGlue(nn.Module):
     default_conf = {
-        "name": "lightglue",  # just for interfacing
+        "name": "semaglue",  # just for interfacing
         "input_dim": 256,  # input descriptor dimension (autoselected from weights)
         "add_scale_ori": False,
         "descriptor_dim": 256,
-        "segment_dim": 256,#equal to segment的维度
+        "segment_dim": 480,#equal to segment的维度
         "num_classes": 144,#
         "n_layers": 9,
         "num_heads": 4,
@@ -424,7 +418,7 @@ class LightGlue(nn.Module):
         },
     }
 
-    required_data_keys = ["keypoints0", "keypoints1", "descriptors0", "descriptors1"]#期望输入
+    required_data_keys = ["keypoints0", "keypoints1", "descriptors0", "descriptors1"]
 
     #url = "https://github.com/cvg/LightGlue/releases/download/{}/{}_lightglue.pth"
 
@@ -438,14 +432,12 @@ class LightGlue(nn.Module):
         else:
             self.input_proj = nn.Identity()
 
-        # 设置位置编码
         head_dim = (conf.descriptor_dim) // conf.num_heads
         # head_dim = (2* conf.descriptor_dim) // conf.num_heads
         self.posenc = LearnableFourierPositionalEncoding(
             2 + 2 * conf.add_scale_ori, head_dim, head_dim
         )
 
-        # 设置多层 Transformer 模块
         h, n, d= conf.num_heads, conf.n_layers, conf.descriptor_dim
         ds = conf.segment_dim
 
@@ -457,17 +449,14 @@ class LightGlue(nn.Module):
             [Seg_Transformer3(d, ds, h, conf.flash) for _ in range(n)]
         )
 
-        # 设置匹配分配模块和令牌置信度模块
         self.log_assignment = nn.ModuleList([MatchAssignment(d) for _ in range(n)])
 
         self.token_confidence = nn.ModuleList(
             [TokenConfidence(d) for _ in range(n-1)]
         )
         
-        # 设置损失函数
         self.loss_fn = NLLLoss(conf.loss)
 
-        # 加载预训练权重（如果提供了权重路径）
         state_dict = None
         if conf.weights is not None:
             if Path(conf.weights).exists():
@@ -484,7 +473,6 @@ class LightGlue(nn.Module):
                     file_name=fname,
                 )
 
-        # 如果存在预训练权重，加载到模型中（并进行一些重命名处理）
         if state_dict:
             for i in range(self.conf.n_layers):
                 pattern = f"self_attn.{i}", f"seg_tranformers.{i}.self_attn"
@@ -497,7 +485,6 @@ class LightGlue(nn.Module):
                 state_dict = {k.replace(*pattern): v for k, v in state_dict.items()}
             self.load_state_dict(state_dict, strict=False)
 
-    #选择禁用以确保编译的稳定性和正确性。
     def compile(self, mode="reduce-overhead"):
         if self.conf.width_confidence != -1:
             warnings.warn(
@@ -510,27 +497,22 @@ class LightGlue(nn.Module):
                 self.seg_tranformers[i], mode = mode, fullgraph=True
             )
     
-    def forward(self, data: dict) -> dict:#输入数据被假定为一个字典，该方法返回一个字典类型的对象
-        #检查输入数据是否包含必需的键
+    def forward(self, data: dict) -> dict:
         for key in self.required_data_keys:
             assert key in data, f"Missing key {key} in data"
 
-        #获取输入数据中的关键信息，如关键点，描述子等
         kpts0, kpts1 = data["keypoints0"], data["keypoints1"]
         b, m, _ = kpts0.shape   #b=3 m=512  _=2
         #print("kpts0.shape"+kpts0.shape)
         b, n, _ = kpts1.shape   #b=3 n=512  _=2device
         device = kpts0.device
-        #根据输入数据中是否包含视图信息，获取图像大小
         if "view0" in data.keys() and "view1" in data.keys():
             size0 = data["view0"].get("image_size")
             size1 = data["view1"].get("image_size")
 
-        #对关键点进行归一化
         kpts0 = normalize_keypoints(kpts0, size0).clone()
         kpts1 = normalize_keypoints(kpts1, size1).clone()
 
-        #如果配置要求添加尺度和方向信息，则将其添加到关键点
         if self.conf.add_scale_ori:
             sc0, o0 = data["scales0"], data["oris0"]
             sc1, o1 = data["scales1"], data["oris1"]
@@ -551,18 +533,14 @@ class LightGlue(nn.Module):
                 -1,
             )
 
-        #获取输入数据的描述子
         desc0 = data["descriptors0"].contiguous()
         desc1 = data["descriptors1"].contiguous()
 
-        #确保描述子的最后一维与模型配置一致
         assert desc0.shape[-1] == self.conf.input_dim
         assert desc1.shape[-1] == self.conf.input_dim
-        #如果启用了自动混合精度，将描述子转换为半精度
         if torch.is_autocast_enabled():
             desc0 = desc0.half()
             desc1 = desc1.half()
-        #对描述子进行投影
         desc0 = self.input_proj(desc0)
         desc1 = self.input_proj(desc1)
         # cache positional embeddings
@@ -592,7 +570,6 @@ class LightGlue(nn.Module):
         # global_feature0 = self.seg_featureprocessor(feature_map0)
         # global_feature1 = self.seg_featureprocessor(feature_map1)
         
-        #循环执行GNN操作
         for i in range(self.conf.n_layers):
             if self.conf.checkpointed and self.training:
                 # desc0, desc1 = checkpoint(#checkpoint优化内存占用
@@ -614,30 +591,6 @@ class LightGlue(nn.Module):
                 all_desc1.append(desc1)
                 continue  # no early stopping or adaptive width at last layer
 
-            # only for eval
-            # if do_early_stop:
-            #     assert b == 1
-            #     token0, token1 = self.token_confidence[i](desc0, desc1)
-            #     if self.check_if_stop(token0[..., :m, :], token1[..., :n, :], i, m + n):
-            #         break
-            # if do_point_pruning:
-            #     assert b == 1
-            #     scores0 = self.log_assignment[i].get_matchability(desc0)#一个线性层加softmax
-            #     prunemask0 = self.get_pruning_mask(token0, scores0, i)#得到被mask的desc
-            #     keep0 = torch.where(prunemask0)[1]
-            #     ind0 = ind0.index_select(1, keep0)
-            #     desc0 = desc0.index_select(1, keep0)
-            #     encoding0 = encoding0.index_select(-2, keep0)
-            #     prune0[:, ind0] += 1
-            #     scores1 = self.log_assignment[i].get_matchability(desc1)
-            #     prunemask1 = self.get_pruning_mask(token1, scores1, i)
-            #     keep1 = torch.where(prunemask1)[1]
-            #     ind1 = ind1.index_select(1, keep1)
-            #     desc1 = desc1.index_select(1, keep1)
-            #     encoding1 = encoding1.index_select(-2, keep1)
-            #     prune1[:, ind1] += 1
-
-        #选择最终的描述子和匹配信息
         desc0, desc1 = desc0[..., :m, :], desc1[..., :n, :]
         scores, _ = self.log_assignment[i](desc0, desc1)
         m0, m1, mscores0, mscores1 = filter_matches(scores, self.conf.filter_threshold)
@@ -681,12 +634,9 @@ class LightGlue(nn.Module):
         self, confidences: torch.Tensor, scores: torch.Tensor, layer_index: int
     ) -> torch.Tensor:
         """mask points which should be removed"""
-        #保留分数高于 (1 - self.conf.width_confidence) 阈值的点
         keep = scores > (1 - self.conf.width_confidence)
         if confidences is not None:  # Low-confidence points are never pruned.
-            #按位或
             keep |= confidences <= self.confidence_thresholds[layer_index]
-        #得到是mask
         return keep
 
     def check_if_stop(
@@ -746,7 +696,7 @@ class LightGlue(nn.Module):
                 pred["log_assignment"],
                 # pred["ref_seg0"],
                 # pred["ref_seg1"]
-            ) / (N - 1)   #训练置信器，pointout的
+            ) / (N - 1)   
 
             del params_i
         losses["total"] /= sum_weights
@@ -763,4 +713,4 @@ class LightGlue(nn.Module):
         return losses, metrics
 
 
-__main_model__ = LightGlue
+__main_model__ = SemaGlue
