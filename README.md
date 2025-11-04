@@ -4,7 +4,7 @@
 Running the evaluation commands automatically downloads the dataset, by default to the directory `data/`. You will need about 1.8 GB of free disk space.
 
 <details>
-<summary>[Evaluating LightGlue]</summary>
+<summary>[Evaluating SemaGlue]</summary>
 
 To evaluate the pre-trained SuperPoint+LightGlue model on HPatches, run:
 ```bash
@@ -53,13 +53,13 @@ You should expect the following results
 Running the evaluation commands automatically downloads the dataset, which takes about 1.5 GB of disk space.
 
 <details>
-<summary>[Evaluating LightGlue]</summary>
+<summary>[Evaluating SemaGlue]</summary>
 
 To evaluate the pre-trained SuperPoint+LightGlue model on MegaDepth-1500, run:
 ```bash
-python -m gluefactory.eval.megadepth1500 --conf superpoint+lightglue-official
+python -m gluefactory.eval.megadepth1500 --conf superpoint+semaglue-official
 # or the adaptive variant
-python -m gluefactory.eval.megadepth1500 --conf superpoint+lightglue-official \
+python -m gluefactory.eval.megadepth1500 --conf superpoint+semaglue-official \
     model.matcher.{depth_confidence=0.95,width_confidence=0.95}
 ```
 The first command should print the following results
@@ -80,7 +80,7 @@ The first command should print the following results
 To use the PoseLib estimator:
 
 ```bash
-python -m gluefactory.eval.megadepth1500 --conf superpoint+lightglue-official \
+python -m gluefactory.eval.megadepth1500 --conf superpoint+semaglue-official \
     eval.estimator=poselib eval.ransac_th=2.0
 ```
 
@@ -161,20 +161,20 @@ We generally follow a two-stage training:
 All training commands automatically download the datasets.
 
 <details>
-<summary>[Training LightGlue]</summary>
+<summary>[Training SemaGlue]</summary>
 
-We show how to train LightGlue with [SuperPoint](https://github.com/magicleap/SuperPointPretrainedNetwork).
-We first pre-train LightGlue on the homography dataset:
+We show how to train SemaGlue with [SuperPoint](https://github.com/magicleap/SuperPointPretrainedNetwork).
+We first pre-train SemaGlue on the homography dataset:
 ```bash
 python -m gluefactory.train sp+lg_homography \  # experiment name
-    --conf gluefactory/configs/superpoint+lightglue_homography.yaml
+    --conf gluefactory/configs/superpoint+semaglue_homography.yaml
 ```
 Feel free to use any other experiment name. By default the checkpoints are written to `outputs/training/`. The default batch size of 128 corresponds to the results reported in the paper and requires 2x 3090 GPUs with 24GB of VRAM each as well as PyTorch >= 2.0 (FlashAttention).
 Configurations are managed by [OmegaConf](https://omegaconf.readthedocs.io/) so any entry can be overridden from the command line.
 If you have PyTorch < 2.0 or weaker GPUs, you may thus need to reduce the batch size via:
 ```bash
 python -m gluefactory.train sp+lg_homography \
-    --conf gluefactory/configs/superpoint+lightglue_homography.yaml  \
+    --conf gluefactory/configs/superpoint+semaglue_homography.yaml  \
     data.batch_size=32  # for 1x 1080 GPU
 ```
 Be aware that this can impact the overall performance. You might need to adjust the learning rate accordingly.
@@ -182,7 +182,7 @@ Be aware that this can impact the overall performance. You might need to adjust 
 We then fine-tune the model on the MegaDepth dataset:
 ```bash
 python -m gluefactory.train sp+lg_megadepth \
-    --conf gluefactory/configs/superpoint+lightglue_megadepth.yaml \
+    --conf gluefactory/configs/superpoint+semaglue_megadepth.yaml \
     train.load_experiment=sp+lg_homography
 ```
 
@@ -192,7 +192,7 @@ Here the default batch size is 32. To speed up training on MegaDepth, we suggest
 python -m gluefactory.scripts.export_megadepth --method sp --num_workers 8
 # run training with cached features
 python -m gluefactory.train sp+lg_megadepth \
-    --conf gluefactory/configs/superpoint+lightglue_megadepth.yaml \
+    --conf gluefactory/configs/superpoint+semaglue_megadepth.yaml \
     train.load_experiment=sp+lg_homography \
     data.load_features.do=True
 ```
