@@ -55,7 +55,6 @@ def normalize_complex_vector(complex_vector):
     return normalized_vector
 
 class LearnableFourierPositionalEncoding(nn.Module):
-    #M:位置编码的维度（即傅里叶频率的数量），dim:输出的位置编码向量的维度，F_dim：用于傅里叶变换的中间表示的维度，如果未提供和dim相同
     def __init__(self, M: int, dim: int, F_dim: int = None, gamma: float = 1.0) -> None:
         super().__init__()
         F_dim = F_dim if F_dim is not None else dim
@@ -65,7 +64,7 @@ class LearnableFourierPositionalEncoding(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """encode position vector"""
-        projected = self.Wr(x)#使用线性层self.Wr将输入位置x投影到维度F_dim//2
+        projected = self.Wr(x)
         cosines, sines = torch.cos(projected), torch.sin(projected)
         emb = torch.stack([cosines, sines], 0).unsqueeze(-3)
         return emb.repeat_interleave(2, dim=-1)
@@ -102,7 +101,7 @@ class TokenConfidence(nn.Module):
 class Attention(nn.Module):
     def __init__(self, allow_flash: bool) -> None:
         super().__init__()
-        if allow_flash and not FLASH_AVAILABLE:#是否在可能的情况下使用FlashAttention
+        if allow_flash and not FLASH_AVAILABLE:
             warnings.warn(
                 "FlashAttention is not available. For optimal speed, "
                 "consider installing torch >= 2.0 or flash-attn.",
@@ -124,7 +123,7 @@ class Attention(nn.Module):
             args = [x.contiguous() for x in [q, k, v]]
             v = F.scaled_dot_product_attention(*args, attn_mask=mask)
             return v if mask is None else v.nan_to_num()
-        else:#如果FlashAttention和标准实现都不可用，则使用标准点积和softmax计算注意力
+        else:
             s = q.shape[-1] ** -0.5
             sim = torch.einsum("...id,...jd->...ij", q, k) * s
             if mask is not None:
@@ -134,7 +133,7 @@ class Attention(nn.Module):
     
 class SelfBlock(nn.Module):
     def __init__(
-        self, embed_dim: int, num_heads: int, flash: bool = False, bias: bool = True#使用偏置
+        self, embed_dim: int, num_heads: int, flash: bool = False, bias: bool = True
     ) -> None:
         super().__init__()
         self.embed_dim = embed_dim
@@ -254,7 +253,7 @@ class TransformerLayer(nn.Module):
         desc1 = self.self_attn(desc1, encoding1, mask1)
         return self.cross_attn(desc0, desc1, mask)
 
-class Seg_Transformer3(nn.Module):#divide_21_ffn_nfnorm_c_pool_newSEncoder_loadfalse_lr20/mega_divide_21_ffn_nfnorm_c_newSEncoder_loadfalse_lr20
+class Seg_Transformer3(nn.Module):
     def __init__(self, embed_dim: int, seg_embed_dim: int, num_heads: int, flash: bool = False, bias: bool = True):
         super().__init__()
         self.self_attn = SelfBlock(embed_dim, num_heads, flash, bias)
@@ -334,7 +333,7 @@ def sigmoid_log_double_softmax(
     certainties = F.logsigmoid(z0) + F.logsigmoid(z1).transpose(1, 2) #b m m
     scores0 = F.log_softmax(sim, 2)
     scores1 = F.log_softmax(sim.transpose(-1, -2).contiguous(), 2).transpose(-1, -2)
-    scores = sim.new_full((b, m + 1, n + 1), 0)#scores全零 b m+1 n+1
+    scores = sim.new_full((b, m + 1, n + 1), 0)#b m+1 n+1
     scores[:, :m, :n] = scores0 + scores1 + certainties
     scores[:, :-1, -1] = F.logsigmoid(-z0.squeeze(-1))
     scores[:, -1, :-1] = F.logsigmoid(-z1.squeeze(-1))
@@ -368,29 +367,23 @@ def filter_matches(scores: torch.Tensor, th: float):
     max0, max1 = scores[:, :-1, :-1].max(2), scores[:, :-1, :-1].max(1)
     m0, m1 = max0.indices, max1.indices
 
-    # 创建索引范围 [0, M] 和 [0, N]
     indices0 = torch.arange(m0.shape[1], device=m0.device)[None]
     indices1 = torch.arange(m1.shape[1], device=m1.device)[None]
 
-    # 判断是否存在互相匹配
     mutual0 = indices0 == m1.gather(1, m0)
     mutual1 = indices1 == m0.gather(1, m1)
 
-    # 计算有效匹配的分数
     max0_exp = max0.values.exp()
     zero = max0_exp.new_tensor(0)
     mscores0 = torch.where(mutual0, max0_exp, zero)
     mscores1 = torch.where(mutual1, mscores0.gather(1, m1), zero)
 
-    # 根据互相匹配和分数是否超过阈值来判断匹配是否有效
     valid0 = mutual0 & (mscores0 > th)
     valid1 = mutual1 & valid0.gather(1, m1)
 
-    # 将无效匹配的索引设置为-1
     m0 = torch.where(valid0, m0, -1)
     m1 = torch.where(valid1, m1, -1)
 
-    # 返回有效匹配的索引和分数
     return m0, m1, mscores0, mscores1
 
 class SemaGlue(nn.Module):
@@ -399,7 +392,7 @@ class SemaGlue(nn.Module):
         "input_dim": 256,  # input descriptor dimension (autoselected from weights)
         "add_scale_ori": False,
         "descriptor_dim": 256,
-        "segment_dim": 480,#equal to segment的维度
+        "segment_dim": 480,#equal to segment dim
         "num_classes": 144,#
         "n_layers": 9,
         "num_heads": 4,
@@ -426,7 +419,6 @@ class SemaGlue(nn.Module):
         super().__init__()
         self.conf = conf = OmegaConf.merge(self.default_conf, conf)
 
-        # 根据配置参数设置输入投影（Linear 或 Identity）
         if conf.input_dim != conf.descriptor_dim:
             self.input_proj = nn.Linear(conf.input_dim, conf.descriptor_dim, bias=True)
         else:
@@ -572,7 +564,7 @@ class SemaGlue(nn.Module):
         
         for i in range(self.conf.n_layers):
             if self.conf.checkpointed and self.training:
-                # desc0, desc1 = checkpoint(#checkpoint优化内存占用
+                # desc0, desc1 = checkpoint(
                 #     self.transformers[i], desc0, desc1, encoding0, encoding1
                 # )
                 
@@ -586,7 +578,7 @@ class SemaGlue(nn.Module):
                 desc0, desc1, local_feature0, local_feature1 = self.seg_tranformers[i](
                     desc0, desc1, encoding0, encoding1, global_feature0, global_feature1)
 
-            if self.training or i == self.conf.n_layers - 1:#如果处于训练模式，并且是最后一层
+            if self.training or i == self.conf.n_layers - 1:
                 all_desc0.append(desc0)
                 all_desc1.append(desc1)
                 continue  # no early stopping or adaptive width at last layer
