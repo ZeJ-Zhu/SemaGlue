@@ -1,4 +1,4 @@
-<span style="font-size: 20px;">Research @ (AAAI 2025)
+# Research @ (AAAI 2025)
 
 # SemaGlue Inference and Evaluation Demo Script
 
@@ -9,6 +9,8 @@ Pytorch implementation of SemaGlue for AAAI 2025 paper "Matching While Perceivin
 Image feature matching is a cardinal problem in computer vision, aiming to establish accurate correspondences between two-view images. Existing methods are constrained by the performance of feature extractors and struggle to capture local information affected by sparse texture or occlusions. Recognizing that human eyes consider not only similar local geometric features but also high-level semantic information of scene objects when matching images, this paper introduces SemaGlue. This novel algorithm perceives and incorporates semantic information into the matching process. In contrast to recent approaches that leverage semantic consistency to narrow the scope of matching areas, SemaGlue achieves semantic amalgamation with the designed Semantic-Aware Fusion (SAF) Block by injecting abundant semantic features from the pre-trained segmentation model. Moreover, the CrossDomain Alignment (CDA) Block is proposed to address domain alignment issues, bridging the gaps between semantic and geometric domains to ensure applicable semantic amalgamation.
 
 This repository contains the evaluation for relative pose estimation on YFCC100M dataset and visualization matching results on a pair of images, all of which are described in our paper.
+![SemaGlue Architecture](./path/to/your/image.png)
+*Figure 1: The pipeline of SemaGlue, featuring SAF and CDA blocks.*
 
 ## Dependencies
 
