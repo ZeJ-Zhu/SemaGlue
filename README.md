@@ -1,4 +1,4 @@
-Research @  (AAAI 2025)
+<span style="font-size: 20px;">Research @ (AAAI 2025)
 
 # SemaGlue Inference and Evaluation Demo Script
 
