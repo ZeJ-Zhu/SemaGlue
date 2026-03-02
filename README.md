@@ -10,7 +10,7 @@ Image feature matching is a cardinal problem in computer vision, aiming to estab
 
 This repository contains the evaluation for relative pose estimation on YFCC100M dataset and visualization matching results on a pair of images, all of which are described in our paper.
 
-![SemaGlue Architecture](https://github.com/ZeJ-Zhu/SemaGlue/edit/main/framework.png)
+![SemaGlue Architecture](framework.png)
 *Figure 1: The pipeline of SemaGlue, featuring SAF and CDA blocks.*
 
 ## Dependencies
